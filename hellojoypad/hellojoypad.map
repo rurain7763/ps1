@@ -3,7 +3,7 @@ Archive member included to satisfy reference by file (symbol)
 ../third_party/psyq/lib\libetc.a(pad.o)
                               joypad.o (PadRead)
 ../third_party/psyq/lib\libetc.a(vsync.o)
-                              main.o (VSync)
+                              display.o (VSync)
 ../third_party/psyq/lib\libetc.a(intr.o)
                               ../third_party/psyq/lib\libetc.a(pad.o) (ResetCallback)
 ../third_party/psyq/lib\libetc.a(intr_dma.o)
@@ -11,17 +11,17 @@ Archive member included to satisfy reference by file (symbol)
 ../third_party/psyq/lib\libetc.a(intr_vb.o)
                               ../third_party/psyq/lib\libetc.a(vsync.o) (Vcount)
 ../third_party/psyq/lib\libgpu.a(e03.o)
-                              main.o (SetDefDrawEnv)
+                              display.o (SetDefDrawEnv)
 ../third_party/psyq/lib\libgpu.a(e04.o)
-                              main.o (SetDefDispEnv)
+                              display.o (SetDefDispEnv)
 ../third_party/psyq/lib\libgpu.a(sys.o)
-                              main.o (ResetGraph)
+                              display.o (ResetGraph)
 ../third_party/psyq/lib\libgte.a(cmb_06.o)
                               main.o (RotAverageNclip3)
 ../third_party/psyq/lib\libgte.a(fgo_01.o)
                               main.o (RotMatrix)
 ../third_party/psyq/lib\libgte.a(msc00.o)
-                              main.o (InitGeom)
+                              display.o (InitGeom)
 ../third_party/psyq/lib\libgte.a(mtx_07.o)
                               main.o (TransMatrix)
 ../third_party/psyq/lib\libgte.a(mtx_08.o)
@@ -33,9 +33,9 @@ Archive member included to satisfy reference by file (symbol)
 ../third_party/psyq/lib\libgte.a(patchgte.o)
                               ../third_party/psyq/lib\libgte.a(msc00.o) (_patch_gte)
 ../third_party/psyq/lib\libgte.a(reg12.o)
-                              main.o (SetGeomOffset)
+                              display.o (SetGeomOffset)
 ../third_party/psyq/lib\libgte.a(reg13.o)
-                              main.o (SetGeomScreen)
+                              display.o (SetGeomScreen)
 ../third_party/psyq/lib\libgte.a(cstbl.o)
                               ../third_party/psyq/lib\libgte.a(fgo_01.o) (rcossin_tbl)
 ../third_party/psyq/lib\libapi.a(a22.o)
@@ -92,7 +92,7 @@ Discarded input sections
  .text          0x0000000000000000        0x0 main.o
  .MIPS.abiflags
                 0x0000000000000000       0x18 main.o
- .pdr           0x0000000000000000       0xc0 main.o
+ .pdr           0x0000000000000000       0x80 main.o
  .text.Render   0x0000000000000000        0x8 main.o
  .text          0x0000000000000000        0x0 joypad.o
  .data          0x0000000000000000        0x0 joypad.o
@@ -112,6 +112,14 @@ Discarded input sections
  .text.SetOTAt  0x0000000000000000       0x20 global.o
  .text.SetNextPrim
                 0x0000000000000000        0xc global.o
+ .text          0x0000000000000000        0x0 display.o
+ .data          0x0000000000000000        0x0 display.o
+ .reginfo       0x0000000000000000       0x18 display.o
+ .MIPS.abiflags
+                0x0000000000000000       0x18 display.o
+ .pdr           0x0000000000000000       0x80 display.o
+ .text.SetCurrBuff
+                0x0000000000000000        0xc display.o
  .text          0x0000000000000000        0x0 ../third_party/common/syscalls/printf.o
  .data          0x0000000000000000        0x0 ../third_party/common/syscalls/printf.o
  .bss           0x0000000000000000        0x0 ../third_party/common/syscalls/printf.o
@@ -150,6 +158,7 @@ Linker script and memory map
 LOAD main.o
 LOAD joypad.o
 LOAD global.o
+LOAD display.o
 LOAD ../third_party/common/syscalls/printf.o
 LOAD ../third_party/common/crt0/crt0.o
 START GROUP
@@ -183,8 +192,8 @@ END GROUP
                 0x000000001f800000                __dcache = ORIGIN (dcache)
                 0x000000001f800400                __dcache_top = (ORIGIN (dcache) + LENGTH (dcache))
                 0x00000000000519c0                __bss_len = (__bss_end - __bss_start)
-                0x0000000000004df0                __ftext_len = (__ftext_end - __ftext_start)
-                0x0000000000005a10                __fdata_len = (__fdata_end - __fdata_start)
+                0x0000000000004e10                __ftext_len = (__ftext_end - __ftext_start)
+                0x00000000000059f0                __fdata_len = (__fdata_end - __fdata_start)
                 0x0000000080200000                __stack_start = (ORIGIN (ram) + LENGTH (ram))
 
 .PSX_EXE_Header
@@ -213,7 +222,7 @@ END GROUP
  *fill*         0x000000008000f838      0x7c8 
                 0x0000000080010000                __ftext_start = ABSOLUTE (.)
 
-.text           0x0000000080010000     0x4df0
+.text           0x0000000080010000     0x4e10
  *(.start)
  .start         0x0000000080010000       0x64 ../third_party/common/crt0/crt0.o
                 0x0000000080010000                _start
@@ -227,252 +236,257 @@ END GROUP
                 0x0000000080010064                main
  *(.text.hot .text.hot.*)
  *(.text .stub .text.* .gnu.linkonce.t.*)
- .text.ScreenInit
-                0x000000008001008c      0x104 main.o
-                0x000000008001008c                ScreenInit
- .text.DisplayFrame
-                0x0000000080010190       0x94 main.o
-                0x0000000080010190                DisplayFrame
- .text.Setup    0x0000000080010224       0x44 main.o
-                0x0000000080010224                Setup
- .text.Update   0x0000000080010268      0x214 main.o
-                0x0000000080010268                Update
+ .text.Setup    0x000000008001008c       0x44 main.o
+                0x000000008001008c                Setup
+ .text.Update   0x00000000800100d0      0x218 main.o
+                0x00000000800100d0                Update
  .text.JoyPadInit
-                0x000000008001047c        0x8 joypad.o
-                0x000000008001047c                JoyPadInit
+                0x00000000800102e8        0x8 joypad.o
+                0x00000000800102e8                JoyPadInit
  .text.JoyPadUpdate
-                0x0000000080010484       0x24 joypad.o
-                0x0000000080010484                JoyPadUpdate
+                0x00000000800102f0       0x24 joypad.o
+                0x00000000800102f0                JoyPadUpdate
  .text.JoyPadCheck
-                0x00000000800104a8       0x10 joypad.o
-                0x00000000800104a8                JoyPadCheck
- .text.EmptyOT  0x00000000800104b8       0x18 global.o
-                0x00000000800104b8                EmptyOT
- .text.GetOTAt  0x00000000800104d0       0x1c global.o
-                0x00000000800104d0                GetOTAt
+                0x0000000080010314       0x10 joypad.o
+                0x0000000080010314                JoyPadCheck
+ .text.EmptyOT  0x0000000080010324       0x18 global.o
+                0x0000000080010324                EmptyOT
+ .text.GetOTAt  0x000000008001033c       0x1c global.o
+                0x000000008001033c                GetOTAt
  .text.IncreaseNextPrim
-                0x00000000800104ec       0x18 global.o
-                0x00000000800104ec                IncreaseNextPrim
+                0x0000000080010358       0x18 global.o
+                0x0000000080010358                IncreaseNextPrim
  .text.ResetNextPrim
-                0x0000000080010504       0x1c global.o
-                0x0000000080010504                ResetNextPrim
+                0x0000000080010370       0x1c global.o
+                0x0000000080010370                ResetNextPrim
  .text.GetNextPrim
-                0x0000000080010520       0x10 global.o
-                0x0000000080010520                GetNextPrim
- .text          0x0000000080010530       0x80 ../third_party/psyq/lib\libetc.a(pad.o)
-                0x0000000080010530                PadInit
-                0x000000008001057c                PadRead
- .text          0x00000000800105b0      0x210 ../third_party/psyq/lib\libetc.a(vsync.o)
-                0x00000000800105b0                VSync
- .text          0x00000000800107c0      0x6c0 ../third_party/psyq/lib\libetc.a(intr.o)
-                0x00000000800107c0                ResetCallback
-                0x00000000800107f0                InterruptCallback
-                0x0000000080010820                DMACallback
-                0x0000000080010850                VSyncCallback
-                0x0000000080010884                VSyncCallbacks
-                0x00000000800108b4                StopCallback
-                0x00000000800108e4                RestartCallback
-                0x0000000080010914                CheckCallback
-                0x0000000080010924                GetIntrMask
-                0x000000008001093c                SetIntrMask
- .text          0x0000000080010e80      0x2a0 ../third_party/psyq/lib\libetc.a(intr_dma.o)
-                0x0000000080010e80                startIntrDMA
- .text          0x0000000080011120      0x120 ../third_party/psyq/lib\libetc.a(intr_vb.o)
-                0x0000000080011120                startIntrVSync
- .text          0x0000000080011240       0xc0 ../third_party/psyq/lib\libgpu.a(e03.o)
-                0x0000000080011240                SetDefDrawEnv
- .text          0x0000000080011300       0x40 ../third_party/psyq/lib\libgpu.a(e04.o)
-                0x0000000080011300                SetDefDispEnv
- .text          0x0000000080011340     0x2f00 ../third_party/psyq/lib\libgpu.a(sys.o)
-                0x0000000080011340                ResetGraph
-                0x00000000800114b4                SetGraphDebug
-                0x0000000080011510                SetGraphQueue
-                0x00000000800115b4                GetGraphDebug
-                0x00000000800115c4                DrawSyncCallback
-                0x0000000080011624                SetDispMask
-                0x00000000800116bc                DrawSync
-                0x0000000080011840                ClearImage
-                0x00000000800118d0                ClearImage2
-                0x0000000080011968                LoadImage
-                0x00000000800119c8                StoreImage
-                0x0000000080011a28                MoveImage
-                0x0000000080011ae0                ClearOTag
-                0x0000000080011ba8                ClearOTagR
-                0x0000000080011c54                DrawPrim
-                0x0000000080011cb0                DrawOTag
-                0x0000000080011d20                PutDrawEnv
-                0x0000000080011de0                DrawOTagEnv
-                0x0000000080011eb8                GetDrawEnv
-                0x0000000080011eec                PutDispEnv
-                0x00000000800123e4                GetDispEnv
-                0x0000000080012418                GetODE
-                0x0000000080012448                SetDrawArea
-                0x00000000800124c8                SetDrawOffset
-                0x0000000080012508                SetDrawEnv
-                0x0000000080013dd8                LoadImage2
-                0x0000000080013ec4                StoreImage2
-                0x0000000080013fb0                MoveImage2
-                0x00000000800140f4                DrawOTag2
-                0x00000000800141f0                _GPU_ResetCallback
- .text          0x0000000080014240       0x90 ../third_party/psyq/lib\libgte.a(cmb_06.o)
-                0x0000000080014240                RotAverageNclip3
- .text          0x00000000800142d0      0x290 ../third_party/psyq/lib\libgte.a(fgo_01.o)
-                0x00000000800142d0                RotMatrix
- .text          0x0000000080014560       0x90 ../third_party/psyq/lib\libgte.a(msc00.o)
-                0x0000000080014568                InitGeom
- .text          0x00000000800145f0       0x30 ../third_party/psyq/lib\libgte.a(mtx_07.o)
-                0x00000000800145f0                TransMatrix
- .text          0x0000000080014620      0x140 ../third_party/psyq/lib\libgte.a(mtx_08.o)
-                0x0000000080014620                ScaleMatrix
- .text          0x0000000080014760       0x30 ../third_party/psyq/lib\libgte.a(mtx_09.o)
-                0x0000000080014760                SetRotMatrix
- .text          0x0000000080014790       0x20 ../third_party/psyq/lib\libgte.a(mtx_12.o)
-                0x0000000080014790                SetTransMatrix
- .text          0x00000000800147b0       0xe0 ../third_party/psyq/lib\libgte.a(patchgte.o)
-                0x00000000800147b0                _patch_gte
- .text          0x0000000080014890       0x20 ../third_party/psyq/lib\libgte.a(reg12.o)
-                0x0000000080014890                SetGeomOffset
- .text          0x00000000800148b0       0x10 ../third_party/psyq/lib\libgte.a(reg13.o)
-                0x00000000800148b0                SetGeomScreen
- .text          0x00000000800148c0       0x10 ../third_party/psyq/lib\libapi.a(a22.o)
-                0x00000000800148c0                PAD_dr
- .text          0x00000000800148d0       0x10 ../third_party/psyq/lib\libapi.a(a23.o)
-                0x00000000800148d0                ReturnFromException
- .text          0x00000000800148e0       0x10 ../third_party/psyq/lib\libapi.a(a24.o)
-                0x00000000800148e0                ResetEntryInt
- .text          0x00000000800148f0       0x10 ../third_party/psyq/lib\libapi.a(a25.o)
-                0x00000000800148f0                HookEntryInt
- .text          0x0000000080014900       0x10 ../third_party/psyq/lib\libapi.a(a36.o)
-                0x0000000080014900                EnterCriticalSection
- .text          0x0000000080014910       0x10 ../third_party/psyq/lib\libapi.a(a37.o)
-                0x0000000080014910                ExitCriticalSection
- .text          0x0000000080014920       0x10 ../third_party/psyq/lib\libapi.a(a91.o)
-                0x0000000080014920                ChangeClearPAD
- .text          0x0000000080014930       0x20 ../third_party/psyq/lib\libapi.a(c114.o)
-                0x0000000080014938                _96_remove
- .text          0x0000000080014950       0x10 ../third_party/psyq/lib\libapi.a(c68.o)
-                0x0000000080014950                FlushCache
- .text          0x0000000080014960       0x10 ../third_party/psyq/lib\libapi.a(c73.o)
-                0x0000000080014960                GPU_cw
- .text          0x0000000080014970       0x10 ../third_party/psyq/lib\libapi.a(l10.o)
-                0x0000000080014970                ChangeClearRCnt
- .text          0x0000000080014980      0x290 ../third_party/psyq/lib\libapi.a(pad.o)
-                0x0000000080014980                SetInitPadFlag
-                0x000000008001498c                ReadInitPadFlag
-                0x000000008001499c                PAD_init
-                0x0000000080014a2c                InitPAD
-                0x0000000080014abc                StartPAD
- .text          0x0000000080014c10       0xa0 ../third_party/psyq/lib\libapi.a(patch.o)
-                0x0000000080014c10                EnablePAD
-                0x0000000080014c24                DisablePAD
-                0x0000000080014c38                _patch_pad
- .text          0x0000000080014cb0       0x10 ../third_party/psyq/lib\libapi.a(a18.o)
-                0x0000000080014cb0                InitPAD2
- .text          0x0000000080014cc0       0x10 ../third_party/psyq/lib\libapi.a(a19.o)
-                0x0000000080014cc0                StartPAD2
- .text          0x0000000080014cd0       0x10 ../third_party/psyq/lib\libapi.a(a21.o)
-                0x0000000080014cd0                PAD_init2
- .text          0x0000000080014ce0       0x70 ../third_party/psyq/lib\libapi.a(chclrpad.o)
-                0x0000000080014ce0                _remove_ChgclrPAD
- .text          0x0000000080014d50       0x10 ../third_party/psyq/lib\libapi.a(l02.o)
-                0x0000000080014d50                SysEnqIntRP
- .text          0x0000000080014d60       0x10 ../third_party/psyq/lib\libapi.a(l03.o)
-                0x0000000080014d60                SysDeqIntRP
- .text          0x0000000080014d70       0x20 ../third_party/psyq/lib\libc.a(a63.o)
-                0x0000000080014d78                puts
- .text          0x0000000080014d90       0x10 ../third_party/psyq/lib\libc.a(c19.o)
-                0x0000000080014d90                setjmp
- .text          0x0000000080014da0       0x10 ../third_party/psyq/lib\libc.a(c42.o)
-                0x0000000080014da0                memcpy
- .text          0x0000000080014db0       0x10 ../third_party/psyq/lib\libc.a(c63.o)
-                0x0000000080014db0                printf
- .text          0x0000000080014dc0       0x30 ../third_party/psyq/lib\libetc.a(vmode.o)
-                0x0000000080014dc0                SetVideoMode
-                0x0000000080014dd4                GetVideoMode
-                0x0000000080014df0                . = ALIGN (0x10)
+                0x000000008001038c       0x10 global.o
+                0x000000008001038c                GetNextPrim
+ .text.DisplayInit
+                0x000000008001039c      0x104 display.o
+                0x000000008001039c                DisplayInit
+ .text.DisplayFrame
+                0x00000000800104a0       0x94 display.o
+                0x00000000800104a0                DisplayFrame
+ .text.GetCurrBuff
+                0x0000000080010534       0x10 display.o
+                0x0000000080010534                GetCurrBuff
+ *fill*         0x0000000080010544        0x4 
+ .text          0x0000000080010548       0x80 ../third_party/psyq/lib\libetc.a(pad.o)
+                0x0000000080010548                PadInit
+                0x0000000080010594                PadRead
+ .text          0x00000000800105c8      0x210 ../third_party/psyq/lib\libetc.a(vsync.o)
+                0x00000000800105c8                VSync
+ .text          0x00000000800107d8      0x6c0 ../third_party/psyq/lib\libetc.a(intr.o)
+                0x00000000800107d8                ResetCallback
+                0x0000000080010808                InterruptCallback
+                0x0000000080010838                DMACallback
+                0x0000000080010868                VSyncCallback
+                0x000000008001089c                VSyncCallbacks
+                0x00000000800108cc                StopCallback
+                0x00000000800108fc                RestartCallback
+                0x000000008001092c                CheckCallback
+                0x000000008001093c                GetIntrMask
+                0x0000000080010954                SetIntrMask
+ .text          0x0000000080010e98      0x2a0 ../third_party/psyq/lib\libetc.a(intr_dma.o)
+                0x0000000080010e98                startIntrDMA
+ .text          0x0000000080011138      0x120 ../third_party/psyq/lib\libetc.a(intr_vb.o)
+                0x0000000080011138                startIntrVSync
+ .text          0x0000000080011258       0xc0 ../third_party/psyq/lib\libgpu.a(e03.o)
+                0x0000000080011258                SetDefDrawEnv
+ .text          0x0000000080011318       0x40 ../third_party/psyq/lib\libgpu.a(e04.o)
+                0x0000000080011318                SetDefDispEnv
+ .text          0x0000000080011358     0x2f00 ../third_party/psyq/lib\libgpu.a(sys.o)
+                0x0000000080011358                ResetGraph
+                0x00000000800114cc                SetGraphDebug
+                0x0000000080011528                SetGraphQueue
+                0x00000000800115cc                GetGraphDebug
+                0x00000000800115dc                DrawSyncCallback
+                0x000000008001163c                SetDispMask
+                0x00000000800116d4                DrawSync
+                0x0000000080011858                ClearImage
+                0x00000000800118e8                ClearImage2
+                0x0000000080011980                LoadImage
+                0x00000000800119e0                StoreImage
+                0x0000000080011a40                MoveImage
+                0x0000000080011af8                ClearOTag
+                0x0000000080011bc0                ClearOTagR
+                0x0000000080011c6c                DrawPrim
+                0x0000000080011cc8                DrawOTag
+                0x0000000080011d38                PutDrawEnv
+                0x0000000080011df8                DrawOTagEnv
+                0x0000000080011ed0                GetDrawEnv
+                0x0000000080011f04                PutDispEnv
+                0x00000000800123fc                GetDispEnv
+                0x0000000080012430                GetODE
+                0x0000000080012460                SetDrawArea
+                0x00000000800124e0                SetDrawOffset
+                0x0000000080012520                SetDrawEnv
+                0x0000000080013df0                LoadImage2
+                0x0000000080013edc                StoreImage2
+                0x0000000080013fc8                MoveImage2
+                0x000000008001410c                DrawOTag2
+                0x0000000080014208                _GPU_ResetCallback
+ .text          0x0000000080014258       0x90 ../third_party/psyq/lib\libgte.a(cmb_06.o)
+                0x0000000080014258                RotAverageNclip3
+ .text          0x00000000800142e8      0x290 ../third_party/psyq/lib\libgte.a(fgo_01.o)
+                0x00000000800142e8                RotMatrix
+ .text          0x0000000080014578       0x90 ../third_party/psyq/lib\libgte.a(msc00.o)
+                0x0000000080014580                InitGeom
+ .text          0x0000000080014608       0x30 ../third_party/psyq/lib\libgte.a(mtx_07.o)
+                0x0000000080014608                TransMatrix
+ .text          0x0000000080014638      0x140 ../third_party/psyq/lib\libgte.a(mtx_08.o)
+                0x0000000080014638                ScaleMatrix
+ .text          0x0000000080014778       0x30 ../third_party/psyq/lib\libgte.a(mtx_09.o)
+                0x0000000080014778                SetRotMatrix
+ .text          0x00000000800147a8       0x20 ../third_party/psyq/lib\libgte.a(mtx_12.o)
+                0x00000000800147a8                SetTransMatrix
+ .text          0x00000000800147c8       0xe0 ../third_party/psyq/lib\libgte.a(patchgte.o)
+                0x00000000800147c8                _patch_gte
+ .text          0x00000000800148a8       0x20 ../third_party/psyq/lib\libgte.a(reg12.o)
+                0x00000000800148a8                SetGeomOffset
+ .text          0x00000000800148c8       0x10 ../third_party/psyq/lib\libgte.a(reg13.o)
+                0x00000000800148c8                SetGeomScreen
+ .text          0x00000000800148d8       0x10 ../third_party/psyq/lib\libapi.a(a22.o)
+                0x00000000800148d8                PAD_dr
+ .text          0x00000000800148e8       0x10 ../third_party/psyq/lib\libapi.a(a23.o)
+                0x00000000800148e8                ReturnFromException
+ .text          0x00000000800148f8       0x10 ../third_party/psyq/lib\libapi.a(a24.o)
+                0x00000000800148f8                ResetEntryInt
+ .text          0x0000000080014908       0x10 ../third_party/psyq/lib\libapi.a(a25.o)
+                0x0000000080014908                HookEntryInt
+ .text          0x0000000080014918       0x10 ../third_party/psyq/lib\libapi.a(a36.o)
+                0x0000000080014918                EnterCriticalSection
+ .text          0x0000000080014928       0x10 ../third_party/psyq/lib\libapi.a(a37.o)
+                0x0000000080014928                ExitCriticalSection
+ .text          0x0000000080014938       0x10 ../third_party/psyq/lib\libapi.a(a91.o)
+                0x0000000080014938                ChangeClearPAD
+ .text          0x0000000080014948       0x20 ../third_party/psyq/lib\libapi.a(c114.o)
+                0x0000000080014950                _96_remove
+ .text          0x0000000080014968       0x10 ../third_party/psyq/lib\libapi.a(c68.o)
+                0x0000000080014968                FlushCache
+ .text          0x0000000080014978       0x10 ../third_party/psyq/lib\libapi.a(c73.o)
+                0x0000000080014978                GPU_cw
+ .text          0x0000000080014988       0x10 ../third_party/psyq/lib\libapi.a(l10.o)
+                0x0000000080014988                ChangeClearRCnt
+ .text          0x0000000080014998      0x290 ../third_party/psyq/lib\libapi.a(pad.o)
+                0x0000000080014998                SetInitPadFlag
+                0x00000000800149a4                ReadInitPadFlag
+                0x00000000800149b4                PAD_init
+                0x0000000080014a44                InitPAD
+                0x0000000080014ad4                StartPAD
+ .text          0x0000000080014c28       0xa0 ../third_party/psyq/lib\libapi.a(patch.o)
+                0x0000000080014c28                EnablePAD
+                0x0000000080014c3c                DisablePAD
+                0x0000000080014c50                _patch_pad
+ .text          0x0000000080014cc8       0x10 ../third_party/psyq/lib\libapi.a(a18.o)
+                0x0000000080014cc8                InitPAD2
+ .text          0x0000000080014cd8       0x10 ../third_party/psyq/lib\libapi.a(a19.o)
+                0x0000000080014cd8                StartPAD2
+ .text          0x0000000080014ce8       0x10 ../third_party/psyq/lib\libapi.a(a21.o)
+                0x0000000080014ce8                PAD_init2
+ .text          0x0000000080014cf8       0x70 ../third_party/psyq/lib\libapi.a(chclrpad.o)
+                0x0000000080014cf8                _remove_ChgclrPAD
+ .text          0x0000000080014d68       0x10 ../third_party/psyq/lib\libapi.a(l02.o)
+                0x0000000080014d68                SysEnqIntRP
+ .text          0x0000000080014d78       0x10 ../third_party/psyq/lib\libapi.a(l03.o)
+                0x0000000080014d78                SysDeqIntRP
+ .text          0x0000000080014d88       0x20 ../third_party/psyq/lib\libc.a(a63.o)
+                0x0000000080014d90                puts
+ .text          0x0000000080014da8       0x10 ../third_party/psyq/lib\libc.a(c19.o)
+                0x0000000080014da8                setjmp
+ .text          0x0000000080014db8       0x10 ../third_party/psyq/lib\libc.a(c42.o)
+                0x0000000080014db8                memcpy
+ .text          0x0000000080014dc8       0x10 ../third_party/psyq/lib\libc.a(c63.o)
+                0x0000000080014dc8                printf
+ .text          0x0000000080014dd8       0x30 ../third_party/psyq/lib\libetc.a(vmode.o)
+                0x0000000080014dd8                SetVideoMode
+                0x0000000080014dec                GetVideoMode
+                0x0000000080014e10                . = ALIGN (0x10)
+ *fill*         0x0000000080014e08        0x8 
  *(.init)
-                0x0000000080014df0                . = ALIGN (0x10)
+                0x0000000080014e10                . = ALIGN (0x10)
  *(.fini)
-                0x0000000080014df0                . = ALIGN (0x10)
-                0x0000000080014df0                __text_end = .
-                0x0000000080014df0                __ftext_end = ABSOLUTE (.)
-                0x0000000080014df0                __fdata_start = ABSOLUTE (.)
+                0x0000000080014e10                . = ALIGN (0x10)
+                0x0000000080014e10                __text_end = .
+                0x0000000080014e10                __ftext_end = ABSOLUTE (.)
+                0x0000000080014e10                __fdata_start = ABSOLUTE (.)
 
-.rodata         0x0000000080014df0      0x2e0
+.rodata         0x0000000080014e10      0x2e0
  *(.rodata .rodata.* .rdata .rdata.* .gnu.linkonce.r.*)
- .rodata        0x0000000080014df0       0x10 ../third_party/common/crt0/crt0.o
- .rdata         0x0000000080014e00       0x10 ../third_party/psyq/lib\libetc.a(vsync.o)
- .rdata         0x0000000080014e10       0x70 ../third_party/psyq/lib\libetc.a(intr.o)
- .rdata         0x0000000080014e80       0x30 ../third_party/psyq/lib\libetc.a(intr_dma.o)
- .rdata         0x0000000080014eb0      0x220 ../third_party/psyq/lib\libgpu.a(sys.o)
-                0x00000000800150d0                . = ALIGN (0x10)
-                0x00000000800150d0                __preinit_array_start = .
+ .rodata        0x0000000080014e10       0x10 ../third_party/common/crt0/crt0.o
+ .rdata         0x0000000080014e20       0x10 ../third_party/psyq/lib\libetc.a(vsync.o)
+ .rdata         0x0000000080014e30       0x70 ../third_party/psyq/lib\libetc.a(intr.o)
+ .rdata         0x0000000080014ea0       0x30 ../third_party/psyq/lib\libetc.a(intr_dma.o)
+ .rdata         0x0000000080014ed0      0x220 ../third_party/psyq/lib\libgpu.a(sys.o)
+                0x00000000800150f0                . = ALIGN (0x10)
+                0x00000000800150f0                __preinit_array_start = .
  *(.preinit_array)
-                0x00000000800150d0                __preinit_array_end = .
-                0x00000000800150d0                . = ALIGN (0x10)
-                0x00000000800150d0                __init_array_start = .
+                0x00000000800150f0                __preinit_array_end = .
+                0x00000000800150f0                . = ALIGN (0x10)
+                0x00000000800150f0                __init_array_start = .
  *(SORT_BY_NAME(.init_array.*))
  *(.init_array)
-                0x00000000800150d0                . = ALIGN (0x10)
+                0x00000000800150f0                . = ALIGN (0x10)
  *crtbegin.o(.ctors)
  *(EXCLUDE_FILE(*crtend.o) .ctors)
  *(SORT_BY_NAME(.ctors.*))
  *crtend.o(.ctors)
-                0x00000000800150d0                __init_array_end = .
-                0x00000000800150d0                . = ALIGN (0x10)
-                0x00000000800150d0                __fini_array_start = .
+                0x00000000800150f0                __init_array_end = .
+                0x00000000800150f0                . = ALIGN (0x10)
+                0x00000000800150f0                __fini_array_start = .
  *(.fini_array)
  *(SORT_BY_NAME(.fini_array.*))
  *crtbegin.o(.dtors)
  *(EXCLUDE_FILE(*crtend.o) .dtors)
  *(SORT_BY_NAME(.dtors.*))
  *crtend.o(.dtors)
-                0x00000000800150d0                __fini_array_end = .
-                0x00000000800150d0                __build_id = .
+                0x00000000800150f0                __fini_array_end = .
+                0x00000000800150f0                __build_id = .
  *(.note.gnu.build-id)
-                0x00000000800150d0                __build_id_end = .
+                0x00000000800150f0                __build_id_end = .
 
-.rel.dyn        0x00000000800150d0        0x0
- .rel.dyn       0x00000000800150d0        0x0 ../third_party/psyq/lib\libgpu.a(sys.o)
+.rel.dyn        0x00000000800150f0        0x0
+ .rel.dyn       0x00000000800150f0        0x0 ../third_party/psyq/lib\libgpu.a(sys.o)
 
 .rodata1
  *(.rodata1)
-                0x00000000800150d0                __data_start = .
+                0x00000000800150f0                __data_start = .
 
-.data           0x00000000800150d0     0x5730
+.data           0x00000000800150f0     0x5710
  *(.a0table)
  *(.data .data.* .gnu.linkonce.d.*)
- .data          0x00000000800150d0       0xd4 main.o
-                0x00000000800150d0                cubeScale
-                0x00000000800150e0                cubeTranslation
-                0x00000000800150f0                floorFaces
-                0x00000000800150fc                floor
-                0x000000008001511c                faces
-                0x0000000080015164                vertices
- *fill*         0x00000000800151a4        0x4 
- .data          0x00000000800151a8       0x20 ../third_party/psyq/lib\libetc.a(vsync.o)
-                0x00000000800151b8                Hcount
- .data          0x00000000800151c8     0x1100 ../third_party/psyq/lib\libetc.a(intr.o)
- .data          0x00000000800162c8       0x30 ../third_party/psyq/lib\libetc.a(intr_dma.o)
- .data          0x00000000800162f8       0x30 ../third_party/psyq/lib\libetc.a(intr_vb.o)
-                0x0000000080016318                Vcount
- .data          0x0000000080016328      0x1a0 ../third_party/psyq/lib\libgpu.a(sys.o)
-                0x0000000080016374                GPU_printf
-                0x0000000080016378                GEnv
-                0x00000000800164a0                _qin
-                0x00000000800164a4                _qout
- .data          0x00000000800164c8       0x10 ../third_party/psyq/lib\libgte.a(msc00.o)
- .data          0x00000000800164d8     0x4000 ../third_party/psyq/lib\libgte.a(cstbl.o)
-                0x00000000800164d8                rcossin_tbl
- .data          0x000000008001a4d8       0x10 ../third_party/psyq/lib\libapi.a(pad.o)
- .data          0x000000008001a4e8       0x10 ../third_party/psyq/lib\libetc.a(vmode.o)
+ .data          0x00000000800150f0       0xd4 main.o
+                0x00000000800150f0                cubeScale
+                0x0000000080015100                cubeTranslation
+                0x0000000080015110                floorFaces
+                0x000000008001511c                floor
+                0x000000008001513c                faces
+                0x0000000080015184                vertices
+ *fill*         0x00000000800151c4        0x4 
+ .data          0x00000000800151c8       0x20 ../third_party/psyq/lib\libetc.a(vsync.o)
+                0x00000000800151d8                Hcount
+ .data          0x00000000800151e8     0x1100 ../third_party/psyq/lib\libetc.a(intr.o)
+ .data          0x00000000800162e8       0x30 ../third_party/psyq/lib\libetc.a(intr_dma.o)
+ .data          0x0000000080016318       0x30 ../third_party/psyq/lib\libetc.a(intr_vb.o)
+                0x0000000080016338                Vcount
+ .data          0x0000000080016348      0x1a0 ../third_party/psyq/lib\libgpu.a(sys.o)
+                0x0000000080016394                GPU_printf
+                0x0000000080016398                GEnv
+                0x00000000800164c0                _qin
+                0x00000000800164c4                _qout
+ .data          0x00000000800164e8       0x10 ../third_party/psyq/lib\libgte.a(msc00.o)
+ .data          0x00000000800164f8     0x4000 ../third_party/psyq/lib\libgte.a(cstbl.o)
+                0x00000000800164f8                rcossin_tbl
+ .data          0x000000008001a4f8       0x10 ../third_party/psyq/lib\libapi.a(pad.o)
+ .data          0x000000008001a508       0x10 ../third_party/psyq/lib\libetc.a(vmode.o)
  *(.data1)
  *(.sdata .sdata.* .gnu.linkonce.s.*)
  *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
  *(.got.plt)
  *(.got)
                 0x000000008001a800                . = ALIGN (0x800)
- *fill*         0x000000008001a4f8      0x308 
+ *fill*         0x000000008001a518      0x2e8 
                 0x000000008001a800                __data_end = .
                 0x000000008001a800                __fdata_end = .
                 0x000000008001a800                __bss_start = .
@@ -480,19 +494,19 @@ END GROUP
 .sbss           0x000000008001a800    0x519c0
  *(.dynsbss)
  *(.sbss .sbss.* .gnu.linkonce.sb.*)
- .sbss          0x000000008001a800        0xa main.o
+ .sbss          0x000000008001a800        0x8 main.o
                 0x000000008001a800                cubeRotation
-                0x000000008001a808                currBuff
- *fill*         0x000000008001a80a        0x2 
- .sbss          0x000000008001a80c        0x4 joypad.o
- .sbss          0x000000008001a810        0x4 global.o
+ .sbss          0x000000008001a808        0x4 joypad.o
+ .sbss          0x000000008001a80c        0x4 global.o
+ .sbss          0x000000008001a810        0x2 display.o
  *(.scommon)
  *(.dynbss)
  *(.bss .bss.* .gnu.linkonce.b.*)
- .bss           0x000000008001a814      0x100 main.o
+ *fill*         0x000000008001a812        0x2 
+ .bss           0x000000008001a814       0x20 main.o
                 0x000000008001a814                worldMatrix
-                0x000000008001a834                dbuff
- .bss           0x000000008001a914    0x50000 global.o
+ .bss           0x000000008001a834    0x50000 global.o
+ .bss           0x000000008006a834       0xe0 display.o
  *fill*         0x000000008006a914        0x4 
  .bss           0x000000008006a918       0x14 ../third_party/psyq/lib\libetc.a(pad.o)
                 0x000000008006a928                PadIdentifier
@@ -538,12 +552,14 @@ OUTPUT(hellojoypad.elf elf32-littlemips)
  .mdebug.abi32  0x0000000000000000        0x0 main.o
  .mdebug.abi32  0x0000000000000000        0x0 joypad.o
  .mdebug.abi32  0x0000000000000000        0x0 global.o
+ .mdebug.abi32  0x0000000000000000        0x0 display.o
 
 .comment        0x0000000000000000       0x12
  .comment       0x0000000000000000       0x12 main.o
                                          0x13 (size before relaxing)
  .comment       0x0000000000000012       0x13 joypad.o
  .comment       0x0000000000000012       0x13 global.o
+ .comment       0x0000000000000012       0x13 display.o
 
 .gnu.attributes
                 0x0000000000000000       0x10
@@ -554,7 +570,9 @@ OUTPUT(hellojoypad.elf elf32-littlemips)
  .gnu.attributes
                 0x0000000000000020       0x10 global.o
  .gnu.attributes
-                0x0000000000000030       0x10 ../third_party/common/crt0/crt0.o
+                0x0000000000000030       0x10 display.o
+ .gnu.attributes
+                0x0000000000000040       0x10 ../third_party/common/crt0/crt0.o
 
 .pdr            0x0000000000000000        0x0
  .pdr           0x0000000000000000        0x0 ../third_party/common/crt0/crt0.o
@@ -604,64 +622,74 @@ OUTPUT(hellojoypad.elf elf32-littlemips)
  .note          0x0000000000001294       0x74 ../third_party/psyq/lib\libc.a(c63.o)
  .note          0x0000000000001308       0x74 ../third_party/psyq/lib\libetc.a(vmode.o)
 
-.debug_info     0x0000000000000000      0xf93
- .debug_info    0x0000000000000000      0xc10 main.o
- .debug_info    0x0000000000000c10      0x126 joypad.o
- .debug_info    0x0000000000000d36      0x239 global.o
- .debug_info    0x0000000000000f6f       0x24 ../third_party/common/crt0/crt0.o
+.debug_info     0x0000000000000000     0x10df
+ .debug_info    0x0000000000000000      0x77e main.o
+ .debug_info    0x000000000000077e      0x126 joypad.o
+ .debug_info    0x00000000000008a4      0x239 global.o
+ .debug_info    0x0000000000000add      0x5de display.o
+ .debug_info    0x00000000000010bb       0x24 ../third_party/common/crt0/crt0.o
 
-.debug_abbrev   0x0000000000000000      0x53a
- .debug_abbrev  0x0000000000000000      0x2ac main.o
- .debug_abbrev  0x00000000000002ac      0x116 joypad.o
- .debug_abbrev  0x00000000000003c2      0x164 global.o
- .debug_abbrev  0x0000000000000526       0x14 ../third_party/common/crt0/crt0.o
+.debug_abbrev   0x0000000000000000      0x6fe
+ .debug_abbrev  0x0000000000000000      0x291 main.o
+ .debug_abbrev  0x0000000000000291      0x116 joypad.o
+ .debug_abbrev  0x00000000000003a7      0x164 global.o
+ .debug_abbrev  0x000000000000050b      0x1df display.o
+ .debug_abbrev  0x00000000000006ea       0x14 ../third_party/common/crt0/crt0.o
 
 .debug_loclists
-                0x0000000000000000       0xa0
+                0x0000000000000000       0xb1
  .debug_loclists
-                0x0000000000000000       0x38 main.o
+                0x0000000000000000       0x49 main.o
  .debug_loclists
-                0x0000000000000038       0x68 global.o
+                0x0000000000000049       0x68 global.o
 
-.debug_aranges  0x0000000000000000       0xf0
+.debug_aranges  0x0000000000000000      0x118
  .debug_aranges
-                0x0000000000000000       0x48 main.o
+                0x0000000000000000       0x38 main.o
  .debug_aranges
-                0x0000000000000048       0x38 joypad.o
+                0x0000000000000038       0x38 joypad.o
  .debug_aranges
-                0x0000000000000080       0x50 global.o
+                0x0000000000000070       0x50 global.o
  .debug_aranges
-                0x00000000000000d0       0x20 ../third_party/common/crt0/crt0.o
+                0x00000000000000c0       0x38 display.o
+ .debug_aranges
+                0x00000000000000f8       0x20 ../third_party/common/crt0/crt0.o
 
 .debug_rnglists
-                0x0000000000000000       0x90
+                0x0000000000000000       0xa9
  .debug_rnglists
-                0x0000000000000000       0x34 main.o
+                0x0000000000000000       0x26 main.o
  .debug_rnglists
-                0x0000000000000034       0x25 joypad.o
+                0x0000000000000026       0x25 joypad.o
  .debug_rnglists
-                0x0000000000000059       0x37 global.o
+                0x000000000000004b       0x37 global.o
+ .debug_rnglists
+                0x0000000000000082       0x27 display.o
 
-.debug_line     0x0000000000000000      0x52b
- .debug_line    0x0000000000000000      0x2a7 main.o
- .debug_line    0x00000000000002a7       0xe6 joypad.o
- .debug_line    0x000000000000038d      0x143 global.o
- .debug_line    0x00000000000004d0       0x5b ../third_party/common/crt0/crt0.o
+.debug_line     0x0000000000000000      0x5fa
+ .debug_line    0x0000000000000000      0x1e9 main.o
+ .debug_line    0x00000000000001e9       0xe6 joypad.o
+ .debug_line    0x00000000000002cf      0x143 global.o
+ .debug_line    0x0000000000000412      0x18d display.o
+ .debug_line    0x000000000000059f       0x5b ../third_party/common/crt0/crt0.o
 
-.debug_str      0x0000000000000000      0x459
- .debug_str     0x0000000000000000      0x3b3 main.o
-                                        0x3ee (size before relaxing)
- .debug_str     0x00000000000003b3       0x26 joypad.o
+.debug_str      0x0000000000000000      0x47c
+ .debug_str     0x0000000000000000      0x2d3 main.o
+                                        0x309 (size before relaxing)
+ .debug_str     0x00000000000002d3       0x26 joypad.o
                                         0x1af (size before relaxing)
- .debug_str     0x00000000000003d9       0x52 global.o
+ .debug_str     0x00000000000002f9       0x52 global.o
                                         0x1f8 (size before relaxing)
- .debug_str     0x000000000000042b       0x2e ../third_party/common/crt0/crt0.o
+ .debug_str     0x000000000000034b      0x103 display.o
+                                        0x2cd (size before relaxing)
+ .debug_str     0x000000000000044e       0x2e ../third_party/common/crt0/crt0.o
                                          0x50 (size before relaxing)
 
-.debug_frame    0x0000000000000000      0x1b4
- .debug_frame   0x0000000000000000       0xd8 main.o
- .debug_frame   0x00000000000000d8       0x5c joypad.o
- .debug_frame   0x0000000000000134       0x80 global.o
+.debug_frame    0x0000000000000000      0x1e4
+ .debug_frame   0x0000000000000000       0x8c main.o
+ .debug_frame   0x000000000000008c       0x5c joypad.o
+ .debug_frame   0x00000000000000e8       0x80 global.o
+ .debug_frame   0x0000000000000168       0x7c display.o
 
 .debug_line_str
                 0x0000000000000000       0x44

@@ -5,27 +5,13 @@
 
 #include "joypad.h"
 #include "global.h"
-
-#define VIDEO_MODE 0
-#define SCREEN_RES_X 320
-#define SCREEN_RES_Y 240
-#define SCREEN_CENTER_X (SCREEN_RES_X >> 1)
-#define SCREEN_CENTER_Y (SCREEN_RES_Y >> 1)
-#define SCREEN_Z 320
+#include "display.h"
 
 #define NUM_CUBE_VERTICES 8
 #define NUM_CUBE_FACES 12
 
 #define NUM_FLOOR_VERTICES 4
 #define NUM_FLOOR_FACES 2
-
-typedef struct {
-    DRAWENV draw[2];
-    DISPENV disp[2];
-} DoubleBuffer;
-
-DoubleBuffer dbuff;
-u_short currBuff;
 
 SVECTOR vertices[] = {
     { -128, -128, -128 },
@@ -71,56 +57,8 @@ VECTOR cubeScale = { ONE, ONE, ONE };
 
 MATRIX worldMatrix = { 0 };
 
-void ScreenInit(void) {
-    // reset gpu
-    ResetGraph(VIDEO_MODE); 
-
-    // set the display area of the first buffer
-    SetDefDispEnv(&dbuff.disp[0], 0,            0, SCREEN_RES_X, SCREEN_RES_Y);
-    SetDefDrawEnv(&dbuff.draw[0], 0, SCREEN_RES_Y, SCREEN_RES_X, SCREEN_RES_Y);
-
-    // set the display area of the second buffer
-    SetDefDispEnv(&dbuff.disp[1], 0, SCREEN_RES_Y, SCREEN_RES_X, SCREEN_RES_Y);
-    SetDefDrawEnv(&dbuff.draw[1], 0,            0, SCREEN_RES_X, SCREEN_RES_Y);
-
-    // set the back/drawing buffer
-    dbuff.draw[0].isbg = 1;
-    dbuff.draw[1].isbg = 1;
-
-    // set the background clear color (purple)
-    setRGB0(&dbuff.draw[0], 63, 0, 127);
-    setRGB0(&dbuff.draw[1], 63, 0, 127);
-
-    // set the current initial buffer
-    currBuff = 0;
-    PutDispEnv(&dbuff.disp[currBuff]);
-    PutDrawEnv(&dbuff.draw[currBuff]);
-
-    // initialize and setup the GTE geometry offsets
-    InitGeom();
-    SetGeomOffset(SCREEN_CENTER_X, SCREEN_CENTER_Y);
-    SetGeomScreen(SCREEN_Z);
-
-    // enable display
-    SetDispMask(1);
-}
-
-void DisplayFrame(void) {
-    DrawSync(0);
-    VSync(0);
-
-    PutDispEnv(&dbuff.disp[currBuff]);
-    PutDrawEnv(&dbuff.draw[currBuff]);
-
-    DrawOTag(GetOTAt(currBuff, OT_LENGTH - 1));
-
-    currBuff = !currBuff;
-
-    ResetNextPrim(currBuff);
-}
-
 void Setup(void) {
-    ScreenInit();
+    DisplayInit();
 
     JoyPadInit();
 
@@ -128,7 +66,7 @@ void Setup(void) {
     cubeTranslation.vy = 0;
     cubeTranslation.vz = 2500;
 
-    ResetNextPrim(currBuff);
+    ResetNextPrim(GetCurrBuff());
 }
 
 void Update(void) {
@@ -136,6 +74,7 @@ void Update(void) {
     int i;
     int nclip;
     long otz, p, flag;
+    int currBuff = GetCurrBuff();
 
     EmptyOT(currBuff);
 

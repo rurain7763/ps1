@@ -4,6 +4,7 @@ TYPE = ps-exe
 SRCS = main.c \
 joypad.c \
 global.c \
+display.c \
 ../third_party/common/syscalls/printf.s \
 ../third_party/common/crt0/crt0.s \
 
