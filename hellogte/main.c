@@ -8,9 +8,9 @@
 #define SCREEN_RES_Y 240
 #define SCREEN_CENTER_X (SCREEN_RES_X >> 1)
 #define SCREEN_CENTER_Y (SCREEN_RES_Y >> 1)
-#define SCREEN_Z 400
+#define SCREEN_Z 320
 
-#define OT_LENGTH 512
+#define OT_LENGTH 256
 
 #define NUM_VERTICES 8
 #define NUM_FACES 12
@@ -28,9 +28,37 @@ u_long ot[2][OT_LENGTH];
 char primBuff[2][2048];
 char* nextPrim;
 
-POLY_F3* triangle;
-TILE* tile;
-POLY_G4* quad;
+SVECTOR vertices[] = {
+    { -128, -128, -128 },
+    {  128, -128, -128 },
+    { 128, -128, 128 },
+    { -128, -128, 128 },
+    { -128, 128, -128 },
+    {  128, 128, -128 },
+    { 128, 128, 128 },
+    { -128, 128, 128 }
+};
+
+u_short faces[] = {
+    0, 3, 2,
+    0, 2, 1,
+    4, 0, 1,
+    4, 1, 5,
+    7, 4, 5,
+    7, 5, 6,
+    5, 1, 2,
+    5, 2, 6,
+    2, 3, 7,
+    2, 7, 6,
+    0, 4, 7,
+    0, 7, 3 
+};
+
+SVECTOR rotation = { 0, 0, 0 };
+VECTOR translation = { 0, 0, 900 };
+VECTOR scale = { ONE, ONE, ONE };
+
+MATRIX worldMatrix;
 
 void ScreenInit(void) {
     // reset gpu
@@ -73,8 +101,7 @@ void DisplayFrame(void) {
     PutDispEnv(&dbuff.disp[currBuff]);
     PutDrawEnv(&dbuff.draw[currBuff]);
 
-    //DrawOTag(ot[currBuff] + OT_LENGTH - 1);
-    DrawOTag(ot[currBuff]);
+    DrawOTag(ot[currBuff] + OT_LENGTH - 1);
 
     currBuff = !currBuff;
 
@@ -88,32 +115,41 @@ void Setup(void) {
 }
 
 void Update(void) {
+    POLY_G3* poly;
+    int i;
+    long otz, p, flag;
+
     ClearOTagR(ot[currBuff], OT_LENGTH);
 
-    tile = (TILE*)nextPrim;
-    setTile(tile);
-    setXY0(tile, 82, 32);
-    setWH(tile, 64, 64);
-    setRGB0(tile, 0, 255, 0);
-    addPrim(ot[currBuff], tile);
-    nextPrim += sizeof(TILE);
+    RotMatrix(&rotation, &worldMatrix);
+    TransMatrix(&worldMatrix, &translation);
+    ScaleMatrix(&worldMatrix, &scale);
 
-    triangle = (POLY_F3*)nextPrim;
-    setPolyF3(triangle);
-    setXY3(triangle, 64, 100, 200, 150, 50, 220);
-    setRGB0(triangle, 255, 0, 255);
-    addPrim(ot[currBuff], triangle);
-    nextPrim += sizeof(POLY_F3);
+    SetRotMatrix(&worldMatrix);
+    SetTransMatrix(&worldMatrix);
 
-    quad = (POLY_G4*)nextPrim;
-    setPolyG4(quad);
-    setXY4(quad, 200, 100, 200, 200, 100, 100, 100, 200);
-    setRGB0(quad, 0, 0, 255);
-    setRGB1(quad, 255, 0, 0);
-    setRGB2(quad, 0, 255, 0);
-    setRGB3(quad, 255, 255, 255);
-    addPrim(ot[currBuff], quad);
-    nextPrim += sizeof(POLY_G4);
+    for(i = 0; i < NUM_FACES * 3; i += 3) {
+        poly = (POLY_G3*)nextPrim;
+        setPolyG3(poly);
+        setRGB0(poly, 0, 255, 255);
+        setRGB1(poly, 255, 0, 255);
+        setRGB2(poly, 255, 255, 0);
+
+        otz = 0;
+        otz += RotTransPers(&vertices[faces[i + 0]], (long*)&poly->x0, &p, &flag);
+        otz += RotTransPers(&vertices[faces[i + 1]], (long*)&poly->x1, &p, &flag);
+        otz += RotTransPers(&vertices[faces[i + 2]], (long*)&poly->x2, &p, &flag);
+        otz /= 3;
+
+        if(otz > 0 && otz < OT_LENGTH) {
+            addPrim(ot[currBuff][otz], poly);
+            nextPrim += sizeof(POLY_G3);
+        }
+    }
+
+    rotation.vx += 6;
+    rotation.vy += 8;
+    rotation.vz += 12;
 }
 
 void Render(void) {
