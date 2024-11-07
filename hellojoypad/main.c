@@ -4,6 +4,7 @@
 #include <libgpu.h>
 
 #include "joypad.h"
+#include "global.h"
 
 #define VIDEO_MODE 0
 #define SCREEN_RES_X 320
@@ -11,8 +12,6 @@
 #define SCREEN_CENTER_X (SCREEN_RES_X >> 1)
 #define SCREEN_CENTER_Y (SCREEN_RES_Y >> 1)
 #define SCREEN_Z 320
-
-#define OT_LENGTH 2048
 
 #define NUM_CUBE_VERTICES 8
 #define NUM_CUBE_FACES 12
@@ -27,11 +26,6 @@ typedef struct {
 
 DoubleBuffer dbuff;
 u_short currBuff;
-
-u_long ot[2][OT_LENGTH];
-
-char primBuff[2][2048];
-char* nextPrim;
 
 SVECTOR vertices[] = {
     { -128, -128, -128 },
@@ -118,11 +112,11 @@ void DisplayFrame(void) {
     PutDispEnv(&dbuff.disp[currBuff]);
     PutDrawEnv(&dbuff.draw[currBuff]);
 
-    DrawOTag(ot[currBuff] + OT_LENGTH - 1);
+    DrawOTag(GetOTAt(currBuff, OT_LENGTH - 1));
 
     currBuff = !currBuff;
 
-    nextPrim = primBuff[currBuff];
+    ResetNextPrim(currBuff);
 }
 
 void Setup(void) {
@@ -134,7 +128,7 @@ void Setup(void) {
     cubeTranslation.vy = 0;
     cubeTranslation.vz = 2500;
 
-    nextPrim = primBuff[currBuff];
+    ResetNextPrim(currBuff);
 }
 
 void Update(void) {
@@ -143,7 +137,7 @@ void Update(void) {
     int nclip;
     long otz, p, flag;
 
-    ClearOTagR(ot[currBuff], OT_LENGTH);
+    EmptyOT(currBuff);
 
     JoyPadUpdate();
 
@@ -164,7 +158,7 @@ void Update(void) {
     SetTransMatrix(&worldMatrix);
 
     for(i = 0; i < NUM_CUBE_FACES * 3; i += 3) {
-        poly = (POLY_G3*)nextPrim;
+        poly = (POLY_G3*)GetNextPrim();
         setPolyG3(poly);
         setRGB0(poly, 0, 255, 255);
         setRGB1(poly, 255, 0, 255);
@@ -186,8 +180,8 @@ void Update(void) {
         }
 
         if(otz > 0 && otz < OT_LENGTH) {
-            addPrim(ot[currBuff][otz], poly);
-            nextPrim += sizeof(POLY_G3);
+            addPrim(GetOTAt(currBuff, otz), poly);
+            IncreaseNextPrim(sizeof(POLY_G3));
         }
     }
 }
