@@ -12,8 +12,11 @@
 
 #define OT_LENGTH 2048
 
-#define NUM_VERTICES 8
-#define NUM_FACES 12
+#define NUM_CUBE_VERTICES 8
+#define NUM_CUBE_FACES 12
+
+#define NUM_FLOOR_VERTICES 4
+#define NUM_FLOOR_FACES 2
 
 typedef struct {
     DRAWENV draw[2];
@@ -54,11 +57,27 @@ u_short faces[] = {
     0, 7, 3 
 };
 
-SVECTOR rotation = { 0, 0, 0 };
-VECTOR translation = { 0, 0, 900 };
-VECTOR scale = { ONE, ONE, ONE };
+SVECTOR floor[] = {
+    { -600, 0, -600 },
+    { -600, 0, 600 },
+    { 600, 0, 600 },
+    { 600, 0, -600 }
+};
 
-MATRIX worldMatrix;
+u_short floorFaces[] = {
+    0, 1, 2,
+    0, 2, 3
+};
+
+SVECTOR cubeRotation = { 0, 0, 0 };
+VECTOR cubeTranslation = { 0, 0, 900 };
+VECTOR cubeScale = { ONE, ONE, ONE };
+
+SVECTOR floorRotation = { 0, 0, 0 };
+VECTOR floorTranslation = { 0, 0, 0 };
+VECTOR floorScale = { ONE, ONE, ONE };
+
+MATRIX worldMatrix = { 0 };
 
 VECTOR vel = {0, 0, 0};
 VECTOR acc = {0, 0, 0};
@@ -115,12 +134,16 @@ void Setup(void) {
     ScreenInit();
 
     acc.vx = 0;
-    acc.vy = 8;
+    acc.vy = 6;
     acc.vz = 0;
 
-    translation.vx = 0;
-    translation.vy = -300;
-    translation.vz = 1800;
+    cubeTranslation.vx = 0;
+    cubeTranslation.vy = -300;
+    cubeTranslation.vz = 2500;
+
+    floorTranslation.vx = 0;
+    floorTranslation.vy = 540;
+    floorTranslation.vz = 2500;
 
     nextPrim = primBuff[currBuff];
 }
@@ -133,26 +156,27 @@ void Update(void) {
 
     ClearOTagR(ot[currBuff], OT_LENGTH);
 
+    // draw cube
     vel.vx += acc.vx;
     vel.vy += acc.vy;
     vel.vz += acc.vz;
 
-    translation.vx += vel.vx >> 3;
-    translation.vy += vel.vy >> 3;
-    translation.vz += vel.vz >> 3;
+    cubeTranslation.vx += vel.vx >> 3;
+    cubeTranslation.vy += vel.vy >> 3;
+    cubeTranslation.vz += vel.vz >> 3;
 
-    if(translation.vy > 400) {
+    if(cubeTranslation.vy > 380) {
         vel.vy *= -1;
     }
 
-    RotMatrix(&rotation, &worldMatrix);
-    TransMatrix(&worldMatrix, &translation);
-    ScaleMatrix(&worldMatrix, &scale);
+    RotMatrix(&cubeRotation, &worldMatrix);
+    TransMatrix(&worldMatrix, &cubeTranslation);
+    ScaleMatrix(&worldMatrix, &cubeScale);
 
     SetRotMatrix(&worldMatrix);
     SetTransMatrix(&worldMatrix);
 
-    for(i = 0; i < NUM_FACES * 3; i += 3) {
+    for(i = 0; i < NUM_CUBE_FACES * 3; i += 3) {
         poly = (POLY_G3*)nextPrim;
         setPolyG3(poly);
         setRGB0(poly, 0, 255, 255);
@@ -180,9 +204,43 @@ void Update(void) {
         }
     }
 
-    rotation.vx += 6;
-    rotation.vy += 8;
-    rotation.vz += 12;
+    cubeRotation.vy += 20;
+
+    // draw floor
+    RotMatrix(&floorRotation, &worldMatrix);
+    TransMatrix(&worldMatrix, &floorTranslation);
+    ScaleMatrix(&worldMatrix, &floorScale);
+
+    SetRotMatrix(&worldMatrix);
+    SetTransMatrix(&worldMatrix);
+
+    for(i = 0; i < NUM_FLOOR_FACES * 3; i += 3) {
+        poly = (POLY_G3*)nextPrim;
+        setPolyG3(poly);
+        setRGB0(poly, 255, 255, 255);
+        setRGB1(poly, 255, 255, 255);
+        setRGB2(poly, 255, 255, 255);
+
+        nclip = RotAverageNclip3(
+            &floor[floorFaces[i + 0]], 
+            &floor[floorFaces[i + 1]], 
+            &floor[floorFaces[i + 2]], 
+            (long*)&poly->x0, 
+            (long*)&poly->x1, 
+            (long*)&poly->x2, 
+            &p,
+            &otz, 
+            &flag);
+
+        if(nclip <= 0) {
+            continue;
+        }
+
+        if(otz > 0 && otz < OT_LENGTH) {
+            addPrim(ot[currBuff][otz], poly);
+            nextPrim += sizeof(POLY_G3);
+        }
+    }
 }
 
 void Render(void) {
