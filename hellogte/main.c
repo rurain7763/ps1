@@ -117,6 +117,7 @@ void Setup(void) {
 void Update(void) {
     POLY_G3* poly;
     int i;
+    int nclip;
     long otz, p, flag;
 
     ClearOTagR(ot[currBuff], OT_LENGTH);
@@ -135,11 +136,20 @@ void Update(void) {
         setRGB1(poly, 255, 0, 255);
         setRGB2(poly, 255, 255, 0);
 
-        otz = 0;
-        otz += RotTransPers(&vertices[faces[i + 0]], (long*)&poly->x0, &p, &flag);
-        otz += RotTransPers(&vertices[faces[i + 1]], (long*)&poly->x1, &p, &flag);
-        otz += RotTransPers(&vertices[faces[i + 2]], (long*)&poly->x2, &p, &flag);
-        otz /= 3;
+        nclip = RotAverageNclip3(
+            &vertices[faces[i + 0]], 
+            &vertices[faces[i + 1]], 
+            &vertices[faces[i + 2]], 
+            (long*)&poly->x0, 
+            (long*)&poly->x1, 
+            (long*)&poly->x2, 
+            &p,
+            &otz, 
+            &flag);
+
+        if(nclip <= 0) {
+            continue;
+        }
 
         if(otz > 0 && otz < OT_LENGTH) {
             addPrim(ot[currBuff][otz], poly);
