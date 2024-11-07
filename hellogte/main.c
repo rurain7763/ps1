@@ -10,7 +10,7 @@
 #define SCREEN_CENTER_Y (SCREEN_RES_Y >> 1)
 #define SCREEN_Z 320
 
-#define OT_LENGTH 256
+#define OT_LENGTH 2048
 
 #define NUM_VERTICES 8
 #define NUM_FACES 12
@@ -59,6 +59,9 @@ VECTOR translation = { 0, 0, 900 };
 VECTOR scale = { ONE, ONE, ONE };
 
 MATRIX worldMatrix;
+
+VECTOR vel = {0, 0, 0};
+VECTOR acc = {0, 0, 0};
 
 void ScreenInit(void) {
     // reset gpu
@@ -111,6 +114,14 @@ void DisplayFrame(void) {
 void Setup(void) {
     ScreenInit();
 
+    acc.vx = 0;
+    acc.vy = 8;
+    acc.vz = 0;
+
+    translation.vx = 0;
+    translation.vy = -300;
+    translation.vz = 1800;
+
     nextPrim = primBuff[currBuff];
 }
 
@@ -121,6 +132,18 @@ void Update(void) {
     long otz, p, flag;
 
     ClearOTagR(ot[currBuff], OT_LENGTH);
+
+    vel.vx += acc.vx;
+    vel.vy += acc.vy;
+    vel.vz += acc.vz;
+
+    translation.vx += vel.vx >> 3;
+    translation.vy += vel.vy >> 3;
+    translation.vz += vel.vz >> 3;
+
+    if(translation.vy > 400) {
+        vel.vy *= -1;
+    }
 
     RotMatrix(&rotation, &worldMatrix);
     TransMatrix(&worldMatrix, &translation);
