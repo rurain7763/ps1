@@ -3,6 +3,8 @@
 #include <libetc.h>
 #include <libgpu.h>
 
+#include "joypad.h"
+
 #define VIDEO_MODE 0
 #define SCREEN_RES_X 320
 #define SCREEN_RES_Y 240
@@ -30,8 +32,6 @@ u_long ot[2][OT_LENGTH];
 
 char primBuff[2][2048];
 char* nextPrim;
-
-u_long padState;
 
 SVECTOR vertices[] = {
     { -128, -128, -128 },
@@ -79,7 +79,7 @@ MATRIX worldMatrix = { 0 };
 
 void ScreenInit(void) {
     // reset gpu
-    ResetGraph(0); 
+    ResetGraph(VIDEO_MODE); 
 
     // set the display area of the first buffer
     SetDefDispEnv(&dbuff.disp[0], 0,            0, SCREEN_RES_X, SCREEN_RES_Y);
@@ -128,7 +128,7 @@ void DisplayFrame(void) {
 void Setup(void) {
     ScreenInit();
 
-    PadInit(0);
+    JoyPadInit();
 
     cubeTranslation.vx = 0;
     cubeTranslation.vy = 0;
@@ -145,14 +145,14 @@ void Update(void) {
 
     ClearOTagR(ot[currBuff], OT_LENGTH);
 
-    // read controller
-    padState = PadRead(0);
+    JoyPadUpdate();
 
-    if(padState & _PAD(0, PADLleft)) {
-        cubeRotation.vy += 32;
+    if(JoyPadCheck(PAD1_LEFT)) {
+        cubeRotation.vy += 10;
     }
-    if(padState & _PAD(0, PADLright)) {
-        cubeRotation.vy -= 32;
+
+    if(JoyPadCheck(PAD1_RIGHT)) {
+        cubeRotation.vy -= 10;
     }
 
     // draw cube
