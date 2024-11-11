@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "libgte.h": "c",
+        "libetc.h": "c",
+        "utils.h": "c"
+    }
+}
